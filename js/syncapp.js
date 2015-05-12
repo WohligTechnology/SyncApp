@@ -17,6 +17,11 @@ syncapp.factory('SyncApp', function ($http) {
     function setconfig() {
         $.jStorage.set("config", config);
     };
+
+    function changeservertimestamp(timestamp) {
+        config.user.servertimestamp = data.timestamp;
+        setconfig();
+    };
     var db = openDatabase('sync', '1.0', 'SyncTestDatabase', 2 * 1024 * 1024);
     db.transaction(function (tx) {
         tx.executeSql('CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY ASC, `name` VARCHAR(255),`email` VARCHAR(255),`serverid` INTEGER UNIQUE )');
@@ -38,11 +43,15 @@ syncapp.factory('SyncApp', function ($http) {
 
 
 
-    function updatelocal(data, callback) {
+
+    function updatelocal(data, status, callback) {
         switch (data.type) {
         case "1":
             {
-                returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')");
+                returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')", function (result, len) {
+                    changeservertimestamp(data.timestamp);
+                    callback();
+                });
             }
             break;
         case "2":
@@ -50,7 +59,7 @@ syncapp.factory('SyncApp', function ($http) {
                 returnval.query("SELECT * FROM `users` WHERE `serverid`='" + data.id + "' ", function (result, len) {
                     if (len == 0) {
                         data.type = "1";
-                        return updatelocal(data, callback);
+                        return updatelocal(data, status, callback);
                     } else {
                         returnval.query("UPDATE `users` SET `name`='" + data.name + "',`email`='" + data.email + "' WHERE `id`='" + result.item(0).id + "'");
                     }
@@ -63,10 +72,20 @@ syncapp.factory('SyncApp', function ($http) {
             }
             break;
         }
-        config.user.servertimestamp = data.timestamp;
-        setconfig();
+
+
     }
 
+
+    returnval.create = function (user, callback) {
+
+    };
+    returnval.update = function (user, callback) {
+
+    };
+    returnval.delete = function (id, callback) {
+
+    };
 
     returnval.servertolocal = function () {
         $http.get(adminurl + "servertolocal", {
@@ -78,8 +97,10 @@ syncapp.factory('SyncApp', function ($http) {
                 console.log("Data Upto date");
             } else {
                 for (var i = 0; i < data.length; i++) {
-                    updatelocal(data[i]);
+                    updatelocal(data[i], "sync");
                 }
+                console.log("run again");
+                return returnval.servertolocal();
             }
         });
     };
