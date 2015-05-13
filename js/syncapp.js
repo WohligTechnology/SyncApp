@@ -23,6 +23,7 @@ syncapp.factory('SyncApp', function ($http) {
         setconfig();
     };
     var db = openDatabase('sync', '1.0', 'SyncTestDatabase', 2 * 1024 * 1024);
+    
     db.transaction(function (tx) {
         tx.executeSql('CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY ASC, `name` VARCHAR(255),`email` VARCHAR(255),`serverid` INTEGER UNIQUE )');
     });
@@ -49,7 +50,7 @@ syncapp.factory('SyncApp', function ($http) {
         case "1":
             {
                 returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')", function (result, len) {
-                    changeservertimestamp(data.timestamp);
+                    
                     callback();
                 });
             }
@@ -72,8 +73,7 @@ syncapp.factory('SyncApp', function ($http) {
             }
             break;
         }
-
-
+        changeservertimestamp(data.timestamp);
     }
 
 
