@@ -1,9 +1,18 @@
 <ion-view view-title="Playlists">
-  <ion-content>
-    <ion-list>
-      <ion-item ng-repeat="playlist in playlists" href="#/app/playlists/{{playlist.id}}">
-        {{playlist.title}}
-      </ion-item>
-    </ion-list>
-  </ion-content>
+    <ion-content>
+        <label class="item item-input">
+            <span class="input-label">Name</span>
+            <input type="text" ng-model="user.name">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Email</span>
+            <input type="text" ng-model="user.email">
+        </label>
+
+        <button ng-click="createlocal(user);" class="button button-positive">
+            Submit
+        </button>
+
+        </ion-list>
+    </ion-content>
 </ion-view>
