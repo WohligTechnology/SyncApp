@@ -90,7 +90,7 @@ syncapp.factory('SyncApp', function ($http) {
     returnval.create = function (data, callback) {
 
         returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')", function (result, len, id) {
-            id=id.insertId;
+            id = id.insertId;
             var d = new Date();
             var n = d.getTime();
             returnval.query("INSERT INTO `userslog` (`id`,`timestamp`,`type`,`user`,`table`) VALUES (null,'" + n + "','" + 1 + "','" + user + "','" + id + "')", null);
@@ -117,6 +117,10 @@ syncapp.factory('SyncApp', function ($http) {
             returnval.query("INSERT INTO `userslog` (`id`,`timestamp`,`type`,`user`,`table`) VALUES (null,'" + n + "','" + 3 + "','" + user + "','" + data.id + "')", null);
             callback();
         });
+    };
+
+    returnval.getall = function () {
+        returnval.query("SELECT `user` as `id`,`name`,`email`,`timestamp` as `timestamp` ,`type` FROM (SELECT `userslog`.`user`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`user` WHERE `userslog`.`timestamp` > '$timestamp' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`user` ORDER BY `tab1`.`timestamp`");
     };
 
     returnval.servertolocal = function () {
