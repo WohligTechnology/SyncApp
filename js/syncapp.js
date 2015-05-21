@@ -1,6 +1,6 @@
 var adminurl = "http://localhost/syncbackend/index.php/welcome/";
 var config = {};
-var abc = 0;
+var abc = {};
 var user = 3;
 var syncapp = angular.module('syncapp', []);
 
@@ -39,19 +39,41 @@ syncapp.factory('SyncApp', function ($http) {
 
                 var len = results.rows.length;
                 console.log(results);
-                abc = results;
+                
                 if (callback) {
 
                     callback(results.rows, len, results);
 
                 }
             }, function (tx, error) {
-                abc = error;
+                
                 console.log(error);
             });
         });
     };
 
+    abc.query=function (querystr, callback) {
+        db.transaction(function (tx) {
+            tx.executeSql(querystr, [], function (tx, results) {
+
+                var len = results.rows.length;
+                console.log(results);
+                
+                
+                    console.log(results.rows);
+                    abc.result=results.rows;
+                    console.log(len);
+                for(var i=0;i<len;i++)
+                {
+                    console.log(abc.result.item(i));
+                }
+
+            }, function (tx, error) {
+                
+                console.log(error);
+            });
+        });
+    };
 
 
 
@@ -119,8 +141,8 @@ syncapp.factory('SyncApp', function ($http) {
         });
     };
 
-    returnval.getall = function () {
-        returnval.query("SELECT `user` as `id`,`name`,`email`,`timestamp` as `timestamp` ,`type` FROM (SELECT `userslog`.`user`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`user` WHERE `userslog`.`timestamp` > '$timestamp' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`user` ORDER BY `tab1`.`timestamp`");
+    returnval.getall = function (callback) {
+        returnval.query("SELECT `table` as `user`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE 1 ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp`",callback);
     };
 
     returnval.servertolocal = function () {
