@@ -133,6 +133,8 @@ syncapp.factory('SyncApp', function ($http) {
 
     };
     returnval.delete = function (data, callback) {
+        var d = new Date();
+        var n = d.getTime();
         returnval.query("SELECT * FROM `users` WHERE `id` = '" + data.id + "'", function (result, len) {
             var row = result.item(0);
             if (row.serverid == null) {
@@ -162,7 +164,7 @@ syncapp.factory('SyncApp', function ($http) {
         if (!config.user.localtimestamp) {
             config.user.localtimestamp = 0;
         }
-        returnval.query("SELECT `table` as `id`,'" + user + "' as `user`,`serverid`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type`,`users`.`serverid` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE `userslog`.`timestamp`>'" + config.user.localtimestamp + "' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp` LIMIT 0,1", callback);
+        returnval.query("SELECT `table` as `id`,'" + user + "' as `user`,`serverid`,`name`,`email`,`timestamp` ,`type`,`serverid2` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type`,`users`.`serverid`,`userslog`.`serverid` as `serverid2` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE `userslog`.`timestamp`>'" + config.user.localtimestamp + "' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp` LIMIT 0,1", callback);
     };
 
     returnval.synclocaltoserver = function (callback) {
