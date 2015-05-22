@@ -24,6 +24,11 @@ syncapp.factory('SyncApp', function ($http) {
         setconfig();
     };
 
+    function changelocaltimestamp(timestamp) {
+        config.user.localtimestamp = timestamp;
+        setconfig();
+    };
+
     var db = openDatabase('sync', '1.0', 'SyncTestDatabase', 2 * 1024 * 1024);
 
     db.transaction(function (tx) {
@@ -34,42 +39,36 @@ syncapp.factory('SyncApp', function ($http) {
     });
 
     returnval.query = function (querystr, callback) {
+        //console.log(querystr);
         db.transaction(function (tx) {
             tx.executeSql(querystr, [], function (tx, results) {
-
                 var len = results.rows.length;
-                console.log(results);
-                
                 if (callback) {
-
                     callback(results.rows, len, results);
-
                 }
             }, function (tx, error) {
-                
                 console.log(error);
             });
         });
     };
 
-    abc.query=function (querystr, callback) {
+    abc.query = function (querystr, callback) {
         db.transaction(function (tx) {
             tx.executeSql(querystr, [], function (tx, results) {
 
                 var len = results.rows.length;
                 console.log(results);
-                
-                
-                    console.log(results.rows);
-                    abc.result=results.rows;
-                    console.log(len);
-                for(var i=0;i<len;i++)
-                {
+
+
+                console.log(results.rows);
+                abc.result = results.rows;
+                console.log(len);
+                for (var i = 0; i < len; i++) {
                     console.log(abc.result.item(i));
                 }
 
             }, function (tx, error) {
-                
+
                 console.log(error);
             });
         });
@@ -82,8 +81,9 @@ syncapp.factory('SyncApp', function ($http) {
         case "1":
             {
                 returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')", function (result, len) {
-
-                    callback();
+                    if (callback) {
+                        callback();
+                    }
                 });
             }
             break;
@@ -141,9 +141,44 @@ syncapp.factory('SyncApp', function ($http) {
         });
     };
 
-    returnval.getall = function (callback) {
-        returnval.query("SELECT `table` as `user`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE 1 ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp`",callback);
+    returnval.getone = function (callback) {
+        //console.log("CHECKING");
+        if (!config.user.localtimestamp) {
+            config.user.localtimestamp = 0;
+        }
+        returnval.query("SELECT `table` as `id`,'"+user+"' as `user`,`serverid`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type`,`users`.`serverid` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE `userslog`.`timestamp`>'" + config.user.localtimestamp + "' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp` LIMIT 0,1", callback);
     };
+
+    returnval.synclocaltoserver = function (callback) {
+        console.log("LOCAL TO SERVER");
+        returnval.getone(function (result, len) {
+            console.log(len);
+            if (len > 0) {
+                console.log("Server Submisssion");
+                //on success change localtimestamp
+                var row = result.item(0);
+                $http.post(adminurl + "localtoserver", row).success(function (data) {
+                    if(data.id)
+                    {
+                        returnval.query("UPDATE `users` SET `serverid`='"+data.id+"' WHERE `id`='"+row.id+"'");
+                    }
+                    console.log(row);
+                    changelocaltimestamp(row.timestamp);
+                    changeservertimestamp(data.timestamp);
+                    returnval.synclocaltoserver();
+                });
+            } else {
+                if (callback) {
+                    callback();
+                }
+            }
+
+        });
+    }
+
+
+
+
 
     returnval.servertolocal = function () {
         $http.get(adminurl + "servertolocal", {

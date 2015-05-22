@@ -40,10 +40,12 @@ angular.module('starter.controllers', ['syncapp'])
     };
     $scope.createlocal = function (user) {
         console.log(user);
-        SyncApp.delete(user, function () {
+        SyncApp.create(user, function () {
             console.log("Done Callback");
         });
     };
+
+    SyncApp.synclocaltoserver();
 
 })
 
