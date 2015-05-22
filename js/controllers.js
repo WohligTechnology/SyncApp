@@ -44,6 +44,18 @@ angular.module('starter.controllers', ['syncapp'])
             console.log("Done Callback");
         });
     };
+    $scope.editlocal = function (user) {
+        console.log(user);
+        SyncApp.update(user, function () {
+            console.log("Done Callback");
+        });
+    };
+    $scope.deletelocal = function (user) {
+        console.log(user);
+        SyncApp.delete(user, function () {
+            console.log("Done Callback");
+        });
+    };
 
     SyncApp.synclocaltoserver();
 

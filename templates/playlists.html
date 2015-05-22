@@ -1,5 +1,6 @@
 <ion-view view-title="Playlists">
     <ion-content>
+       CREATE
         <label class="item item-input">
             <span class="input-label">Name</span>
             <input type="text" ng-model="user.name">
@@ -10,6 +11,45 @@
         </label>
 
         <button ng-click="createlocal(user);" class="button button-positive">
+            Submit
+        </button>
+        
+        
+        <br>  
+        EDIT
+        <label class="item item-input">
+            <span class="input-label">Id</span>
+            <input type="text" ng-model="usere.id">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Name</span>
+            <input type="text" ng-model="usere.name">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Email</span>
+            <input type="text" ng-model="usere.email">
+        </label>
+
+        <button ng-click="editlocal(usere);" class="button button-positive">
+            Submit
+        </button>
+        
+        <br>
+        DELETE
+        <label class="item item-input">
+            <span class="input-label">Id</span>
+            <input type="text" ng-model="userd.id">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Name</span>
+            <input type="text" ng-model="userd.name">
+        </label>
+        <label class="item item-input">
+            <span class="input-label">Email</span>
+            <input type="text" ng-model="userd.email">
+        </label>
+
+        <button ng-click="deletelocal(userd);" class="button button-positive">
             Submit
         </button>
 

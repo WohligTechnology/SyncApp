@@ -35,7 +35,7 @@ syncapp.factory('SyncApp', function ($http) {
         tx.executeSql('CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY ASC, `name` VARCHAR(255),`email` VARCHAR(255),`serverid` INTEGER  )');
     });
     db.transaction(function (tx) {
-        tx.executeSql('CREATE TABLE IF NOT EXISTS `userslog` (`id` INTEGER PRIMARY KEY ASC, `timestamp` TIMESTAMP,`type` INTEGER,`user` INTEGER,`table` INTEGER)');
+        tx.executeSql('CREATE TABLE IF NOT EXISTS `userslog` (`id` INTEGER PRIMARY KEY ASC, `timestamp` TIMESTAMP,`type` INTEGER,`user` INTEGER,`table` INTEGER,`serverid` INTEGER)');
     });
 
     returnval.query = function (querystr, callback) {
@@ -111,7 +111,7 @@ syncapp.factory('SyncApp', function ($http) {
 
     returnval.create = function (data, callback) {
 
-        returnval.query("INSERT INTO `users` (`id`, `name`,`email`,`serverid`) VALUES (null,'" + data.name + "','" + data.email + "','" + data.id + "')", function (result, len, id) {
+        returnval.query("INSERT INTO `users` (`id`, `name`,`email`) VALUES (null,'" + data.name + "','" + data.email + "')", function (result, len, id) {
             id = id.insertId;
             var d = new Date();
             var n = d.getTime();
@@ -133,12 +133,28 @@ syncapp.factory('SyncApp', function ($http) {
 
     };
     returnval.delete = function (data, callback) {
-        returnval.query("DELETE FROM `users` WHERE `id`='" + data.id + "'", function (result, len) {
-            var d = new Date();
-            var n = d.getTime();
-            returnval.query("INSERT INTO `userslog` (`id`,`timestamp`,`type`,`user`,`table`) VALUES (null,'" + n + "','" + 3 + "','" + user + "','" + data.id + "')", null);
+        returnval.query("SELECT * FROM `users` WHERE `id` = '" + data.id + "'", function (result, len) {
+            var row = result.item(0);
+            if (row.serverid == null) {
+                console.log("DELETE ALL THE RECORDS FROM LOGS AND OTHER");
+                returnval.query("DELETE FROM `users` WHERE `id`='" + data.id + "'");
+                returnval.query("DELETE FROM `userslog` WHERE `table`='" + data.id + "'");
+
+            } else {
+                console.log("STORE SERVER ID " + row.serverid);
+                returnval.query("DELETE FROM `users` WHERE `id`='" + data.id + "'");
+                returnval.query("INSERT INTO `userslog` (`id`,`timestamp`,`type`,`user`,`table`,`serverid`) VALUES (null,'" + n + "','" + 3 + "','" + user + "','" + data.id + "','" + row.serverid + "')", null);
+            }
             callback();
+
         });
+
+        //        returnval.query("DELETE FROM `users` WHERE `id`='" + data.id + "'", function (result, len) {
+        //            var d = new Date();
+        //            var n = d.getTime();
+        //            returnval.query("INSERT INTO `userslog` (`id`,`timestamp`,`type`,`user`,`table`) VALUES (null,'" + n + "','" + 3 + "','" + user + "','" + data.id + "')", null);
+        //            callback();
+        //        });
     };
 
     returnval.getone = function (callback) {
@@ -146,7 +162,7 @@ syncapp.factory('SyncApp', function ($http) {
         if (!config.user.localtimestamp) {
             config.user.localtimestamp = 0;
         }
-        returnval.query("SELECT `table` as `id`,'"+user+"' as `user`,`serverid`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type`,`users`.`serverid` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE `userslog`.`timestamp`>'" + config.user.localtimestamp + "' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp` LIMIT 0,1", callback);
+        returnval.query("SELECT `table` as `id`,'" + user + "' as `user`,`serverid`,`name`,`email`,`timestamp` ,`type` FROM (SELECT `userslog`.`table`,`users`.`name`,`users`.`email`, `userslog`.`timestamp`, `userslog`.`type`,`users`.`serverid` FROM `userslog` LEFT OUTER JOIN `users` ON `users`.`id`=`userslog`.`table` WHERE `userslog`.`timestamp`>'" + config.user.localtimestamp + "' ORDER BY `userslog`.`timestamp` DESC) as `tab1` GROUP BY `tab1`.`table` ORDER BY `tab1`.`timestamp` LIMIT 0,1", callback);
     };
 
     returnval.synclocaltoserver = function (callback) {
@@ -158,9 +174,8 @@ syncapp.factory('SyncApp', function ($http) {
                 //on success change localtimestamp
                 var row = result.item(0);
                 $http.post(adminurl + "localtoserver", row).success(function (data) {
-                    if(data.id)
-                    {
-                        returnval.query("UPDATE `users` SET `serverid`='"+data.id+"' WHERE `id`='"+row.id+"'");
+                    if (data.id) {
+                        returnval.query("UPDATE `users` SET `serverid`='" + data.id + "' WHERE `id`='" + row.id + "'");
                     }
                     console.log(row);
                     changelocaltimestamp(row.timestamp);
